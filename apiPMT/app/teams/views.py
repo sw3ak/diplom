@@ -19,13 +19,13 @@ class TeamViewSet(ModelViewSet):
             return [IsAdmin()]
         return [IsAuthenticated()]
 
-    def get_queryset(self):
+    def get_teams(self):
         user = self.request.user
         if user.is_superuser:
             return Team.objects.all()
         return user.teams.all()
 
-    def destroy(self, request, *args, **kwargs):
+    def delete_teams(self):
         try:
             instance = self.get_object()
             team_members = instance.members.all()
@@ -43,27 +43,7 @@ class TeamViewSet(ModelViewSet):
         except Team.DoesNotExist:
             return Response({"error": "Team not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=True, methods=['post'], url_path='remove-member')
-    def remove_member(self, request, pk=None):
-        team = self.get_object()
-        user_id = request.data.get('user_id')
-        if not user_id:
-            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = team.members.get(id=user_id)
-            team_required_roles = [
-                'teamLead', 'junior_backend', 'middle_backend', 'senior_backend',
-                'junior_frontend', 'middle_frontend', 'senior_frontend', 'tester', 'devops'
-            ]
-            if user.position in team_required_roles:
-                user.position = None
-                user.save()
-            team.members.remove(user)
-            return Response({"status": f"User {user_id} removed from team"}, status=status.HTTP_200_OK)
-        except team.members.model.DoesNotExist:
-            return Response({"error": "User not in team"}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['post'], url_path='add-member')
+    @action(detail=False, methods=['post'], url_path='add-member')  # обработка вьюшки
     def add_member(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -84,3 +64,23 @@ class TeamViewSet(ModelViewSet):
             return Response({"error": "User already in team"}, status=status.HTTP_400_BAD_REQUEST)
         except Team.DoesNotExist:
             return Response({"error": f"Team {team_name} does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='remove-member') # обработка вьюшки
+    def delete_member(self, request):
+        team = self.get_object()
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = team.members.get(id=user_id)
+            team_required_roles = [
+                'teamLead', 'junior_backend', 'middle_backend', 'senior_backend',
+                'junior_frontend', 'middle_frontend', 'senior_frontend', 'tester', 'devops'
+            ]
+            if user.position in team_required_roles:
+                user.position = None
+                user.save()
+            team.members.remove(user)
+            return Response({"status": f"User {user_id} removed from team"}, status=status.HTTP_200_OK)
+        except team.members.model.DoesNotExist:
+            return Response({"error": "User not in team"}, status=status.HTTP_400_BAD_REQUEST)

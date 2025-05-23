@@ -29,7 +29,7 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    def clean(self):
+    def validate_user(self):
         if self.pk:
             if self.is_superuser:
                 if self.teams.exists():
@@ -54,7 +54,7 @@ class User(AbstractUser):
             if self.position in team_required_roles and not self.teams.exists():
                 raise ValidationError(f"Роль {self.position} может быть назначена только при наличии команды.")
 
-    def save(self, *args, **kwargs):
+    def save_user(self, *args, **kwargs):
         if self.is_superuser and self.position is None:
             self.position = 'admin'
         try:
