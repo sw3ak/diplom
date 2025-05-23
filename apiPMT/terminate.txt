@@ -1,0 +1,18 @@
+Remove-Item -Path db.sqlite3 -Force
+
+Remove-Item -Path app\users\migrations\* -Recurse -Force
+Remove-Item -Path app\projects\migrations\* -Recurse -Force
+Remove-Item -Path app\tasks\migrations\* -Recurse -Force
+Remove-Item -Path app\teams\migrations\* -Recurse -Force
+Remove-Item -Path app\comments\migrations\* -Recurse -Force
+
+New-Item -Path app\users\migrations\__init__.py -ItemType File -Force
+New-Item -Path app\projects\migrations\__init__.py -ItemType File -Force
+New-Item -Path app\tasks\migrations\__init__.py -ItemType File -Force
+New-Item -Path app\teams\migrations\__init__.py -ItemType File -Force
+New-Item -Path app\comments\migrations\__init__.py -ItemType File -Force
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
